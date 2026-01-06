@@ -1,5 +1,5 @@
-use std::collections::VecDeque;
 use super::error::{QueryErr, Result};
+use std::collections::VecDeque;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token {

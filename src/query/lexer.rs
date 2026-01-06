@@ -66,16 +66,8 @@ impl Lexer {
         ch.is_ascii_digit()
     }
 
-    fn finished(&self) -> bool {
-        self.src.is_empty()
-    }
-
     fn curr(&self) -> Option<char> {
         self.src.front().copied()
-    }
-
-    fn peek(&self, step: usize) -> String {
-        self.src.iter().take(step).collect()
     }
 
     fn walk(&mut self) -> Option<char> {

@@ -57,7 +57,7 @@ pub struct Lexer {
 
 impl Lexer {
     pub fn new(src: &str) -> Self {
-        Lexer {
+        Self {
             src: src.chars().collect(),
         }
     }

@@ -27,7 +27,8 @@ impl Planner {
     }
 
     fn plan_insert(&self, table: Box<str>, clauses: Vec<Clause>) -> Plan {
-        let (mut columns, mut values) = (vec![], None);
+        let mut columns = vec![]; // 빈 값이면 모든 컬럼
+        let mut values = None; // 필수
         for clause in clauses {
             match clause {
                 Clause::Columns(cols) => columns = cols,
@@ -44,7 +45,10 @@ impl Planner {
     }
 
     fn plan_select(&self, table: Box<str>, clauses: Vec<Clause>) -> Plan {
-        let (mut columns, mut filter, mut order, mut limit) = (vec![], None, None, None);
+        let mut columns = vec![]; // 빈 값이면 모든 컬럼
+        let mut filter = None; // 선택적
+        let mut order = None; // 선택적
+        let mut limit = None; // 선택적
         for clause in clauses {
             match clause {
                 Clause::Columns(cols) => columns = cols,

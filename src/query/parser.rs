@@ -46,7 +46,7 @@ pub enum Clause {
     Columns(Vec<Box<str>>),          // col name
     Assigns(Vec<(Box<str>, Expr)>),  // col name, expr
     Defs(Vec<(Box<str>, Box<str>)>), // col name, col type
-    OrderBy(Vec<(Box<str>, bool)>),  // bool: true=ASC, false=DESC
+    OrderBy(Vec<(Box<Expr>, bool)>), // bool: true=ASC, false=DESC
     Where(Box<Expr>),
     Limit(u64),
 }
@@ -71,7 +71,7 @@ impl Clause {
     as_clause!(as_columns, Columns, Vec<Box<str>>);
     as_clause!(as_assigns, Assigns, Vec<(Box<str>, Expr)>);
     as_clause!(as_defs, Defs, Vec<(Box<str>, Box<str>)>);
-    as_clause!(as_order_by, OrderBy, Vec<(Box<str>, bool)>);
+    as_clause!(as_order_by, OrderBy, Vec<(Box<Expr>, bool)>);
     as_clause!(as_where, Where, Expr);
     as_clause!(as_limit, Limit, u64);
 }

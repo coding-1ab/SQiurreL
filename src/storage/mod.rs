@@ -28,11 +28,10 @@ impl DataType {
             DataType::Int => "Int",
             DataType::Float => "Float",
             DataType::Bool => "Bool",
-            DataType::String => "String"
+            DataType::String => "String",
         }
     }
 }
-
 
 impl DataValue {
     pub fn verify(self, data_type: DataType) -> bool {
@@ -51,24 +50,37 @@ pub async fn create_table(name: String) -> io::Result<TableId> {
     let val = hasher.finish();
     fs::create_dir(val.to_string()).await?;
     let mut file = fs::File::create(format!("{}/schema", val)).await?;
-    file.write_all(format!("NAME {}\n", name).as_bytes()).await?;
-    file.write_all("LAST_ID 0000000000000000\n".as_bytes()).await?;
+    file.write_all(format!("NAME {}\n", name).as_bytes())
+        .await?;
+    file.write_all("LAST_ID 0000000000000000\n".as_bytes())
+        .await?;
     file.flush().await?;
     Ok(TableId(val))
 }
 
-pub async fn create_column(table_id: TableId, col_name: String, col_type: DataType) -> tokio::io::Result<ColumnId> {
+pub async fn create_column(
+    table_id: TableId,
+    col_name: String,
+    col_type: DataType,
+) -> tokio::io::Result<ColumnId> {
     let mut hasher = DefaultHasher::new();
     col_name.hash(&mut hasher);
     let val = hasher.finish();
-    let mut file = fs::File::options().append(true).open(format!("{}/schema", table_id.0)).await?;
-    file.write_all(format!("COLUMN {} {} {col_name}\n", val, col_type.as_str()).as_bytes()).await?;
+    let mut file = fs::File::options()
+        .append(true)
+        .open(format!("{}/schema", table_id.0))
+        .await?;
+    file.write_all(format!("COLUMN {} {} {col_name}\n", val, col_type.as_str()).as_bytes())
+        .await?;
     file.flush().await?;
     Ok(ColumnId(val))
 }
 
 pub async fn create_row(table_id: TableId, values: Vec<DataValue>) -> io::Result<RowId> {
-    let mut file = fs::File::options().write(true).open(format!("{}/schema", table_id.0)).await?;
+    let mut file = fs::File::options()
+        .write(true)
+        .open(format!("{}/schema", table_id.0))
+        .await?;
     let mut matching_count = 0;
     let pattern = "\nLAST_ID ";
     let mut position = 0;
@@ -84,9 +96,12 @@ pub async fn create_row(table_id: TableId, values: Vec<DataValue>) -> io::Result
         if matching_count == pattern.len() {
             break;
         }
-    };
+    }
     if matching_count != pattern.len() {
-        return Err(io::Error::new(io::ErrorKind::Other, "Schema file is corrupted"));
+        return Err(io::Error::new(
+            io::ErrorKind::Other,
+            "Schema file is corrupted",
+        ));
     }
 
     let mut hexadecimal = [0u8; 8];
@@ -94,7 +109,9 @@ pub async fn create_row(table_id: TableId, values: Vec<DataValue>) -> io::Result
     let hexadecimal = String::from_utf8_lossy(&hexadecimal);
     let parsed = u32::from_str_radix(&hexadecimal, 16).unwrap();
     buffered.seek(SeekFrom::Start(position)).await?;
-    buffered.write(format!("{:016X}", parsed + 1).as_bytes()).await?;
+    buffered
+        .write(format!("{:016X}", parsed + 1).as_bytes())
+        .await?;
 
     todo!()
 }

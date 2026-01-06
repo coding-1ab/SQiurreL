@@ -214,11 +214,12 @@ impl Parser {
         self.expect(&Token::Insert)?;
         self.expect(&Token::Into)?;
         let table = self.consume_ident()?;
-        let columns = if self.curr == Token::LParen {
+        let columns = if &self.curr == &Token::LParen {
             self.parse_columns_clause()?
         } else {
             Clause::Columns(vec![])
         };
+        self.expect(&Token::Values)?;
         let values = self.parse_values_clause()?;
         let clauses = self.parse_optional_clauses()?;
         Ok(Stmt::Insert {
@@ -232,7 +233,12 @@ impl Parser {
     fn parse_select(&mut self) -> Result<Stmt> {
         // SELECT <col1>, <col2>, ... FROM <table> [WHERE ...] [ORDER BY ...] [LIMIT ...]
         self.expect(&Token::Select)?;
-        let columns = self.parse_columns_clause()?;
+        // 전체 컬럼 선택 '*' 처리
+        let columns = if !self.maybe(&Token::Mul)? {
+            self.parse_columns_clause()?
+        } else {
+            Clause::Columns(vec![])
+        };
         self.expect(&Token::From)?;
         let table = self.consume_ident()?;
         let clauses = self.parse_optional_clauses()?;
@@ -275,7 +281,6 @@ impl Parser {
     }
 
     fn parse_values_clause(&mut self) -> Result<Clause> {
-        self.maybe(&Token::Values)?;
         self.expect(&Token::LParen)?;
         let mut values = Vec::new();
         loop {

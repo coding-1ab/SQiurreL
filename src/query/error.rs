@@ -4,7 +4,6 @@ pub type Result<T> = std::result::Result<T, QueryErr>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum QueryErr {
-    ReservedKeyword(String),
     UnexpectedEof,
     InvalidNum(String),
     UnterminatedText,
@@ -17,11 +16,6 @@ pub enum QueryErr {
 impl fmt::Display for QueryErr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::ReservedKeyword(k) => write!(
-                f,
-                "Reserved keyword '{}' cannot be used as an identifier",
-                k
-            ),
             Self::UnexpectedEof => write!(f, "Unexpected end of file while parsing"),
             Self::InvalidNum(s) => write!(f, "Invalid number format: '{}'", s),
             Self::UnterminatedText => write!(f, "Unterminated text literal"),

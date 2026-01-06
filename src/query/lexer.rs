@@ -70,6 +70,10 @@ impl Lexer {
         self.src.front().copied()
     }
 
+    fn peek(&self, step: usize) -> String {
+        self.src.iter().take(step).collect()
+    }
+
     fn walk(&mut self) -> Option<char> {
         self.src.pop_front()
     }
@@ -84,6 +88,13 @@ impl Lexer {
 
     pub fn next(&mut self) -> Result<Token, LexErr> {
         self.skip_ws();
+        if self.peek(2) == "--" {
+            self.walk();
+            self.walk();
+            while let Some(ch) = self.walk()
+                && ch != '\n'
+            {}
+        }
         let ch = self.walk().ok_or(LexErr::UnexpectedEof)?;
         Ok(match ch {
             '.' => Token::Dot,
@@ -325,5 +336,41 @@ mod test {
         assert_eq!(lexer.next().unwrap(), Token::Not);
         assert_eq!(lexer.next().unwrap(), Token::And);
         assert_eq!(lexer.next().unwrap(), Token::Or);
+    }
+
+    #[test]
+    fn test_invalid_numbers() {
+        let mut lexer = Lexer::new("1.2.3");
+        // 1.2 가 하나의 숫자로 인식되고, 그 다음 . 이 구분자로 인식되거나 혹은 에러가 나야 함.
+        // 현재 구현상으로는 1.2 까지 읽고 다음 next()에서 . 을 읽음.
+        assert_eq!(lexer.next().unwrap(), Token::Num("1.2".to_string()));
+        assert_eq!(lexer.next().unwrap(), Token::Dot);
+        assert_eq!(lexer.next().unwrap(), Token::Num("3".to_string()));
+    }
+
+    #[test]
+    fn test_comments() {
+        let mut lexer = Lexer::new("SELECT -- comment\nFROM users");
+        assert_eq!(lexer.next().unwrap(), Token::Select);
+        assert_eq!(lexer.next().unwrap(), Token::From);
+        assert_eq!(lexer.next().unwrap(), Token::Ident("users".to_string()));
+    }
+
+    #[test]
+    fn test_comments_eof() {
+        let mut lexer = Lexer::new("SELECT -- comment");
+        assert_eq!(lexer.next().unwrap(), Token::Select);
+        match lexer.next() {
+            Err(LexErr::UnexpectedEof) => (),
+            _ => panic!("Expected UnexpectedEof after comment at end of string"),
+        }
+    }
+
+    #[test]
+    fn test_hex_not_supported() {
+        let mut lexer = Lexer::new("0x123");
+        // 0은 숫자로 인식, x는 식별자 시작으로 인식될 것임 (현재 구현상)
+        assert_eq!(lexer.next().unwrap(), Token::Num("0".to_string()));
+        assert_eq!(lexer.next().unwrap(), Token::Ident("x123".to_string()));
     }
 }

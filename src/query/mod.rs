@@ -1,9 +1,9 @@
-mod lexer;
+pub mod lexer;
 
-pub struct TxId(u64);
-pub struct TableId(u64);
-pub struct ColumnId(u64);
-pub struct RowId(u64);
+pub struct TxId(pub u64);
+pub struct TableId(pub u64);
+pub struct ColumnId(pub u64);
+pub struct RowId(pub u64);
 
 struct QueryPlan {
     tx_id: TxId,

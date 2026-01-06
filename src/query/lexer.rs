@@ -11,10 +11,14 @@ pub enum Token {
     // 키워드
     Create,    // CREATE
     Table,     // TABLE
+    Insert,    // INSERT
+    Into,      // INTO
+    Values,    // VALUES
     Select,    // SELECT
     From,      // FROM
     Where,     // WHERE
     Update,    // UPDATE
+    Set,       // SET
     Alter,     // ALTER
     Delete,    // DELETE
     Drop,      // DROP
@@ -28,6 +32,10 @@ pub enum Token {
     Not,       // NOT
     And,       // AND
     Or,        // OR
+    In,        // IN
+    Like,      // LIKE
+    Between,   // BETWEEN
+    Is,        // IS
     Eq,        // =
     Gt,        // >
     Lt,        // <
@@ -187,16 +195,24 @@ impl Lexer {
             "FALSE" => Token::Bool(false),
             "CREATE" => Token::Create,
             "TABLE" => Token::Table,
+            "INSERT" => Token::Insert,
+            "INTO" => Token::Into,
+            "VALUES" => Token::Values,
             "SELECT" => Token::Select,
             "FROM" => Token::From,
             "WHERE" => Token::Where,
             "UPDATE" => Token::Update,
+            "SET" => Token::Set,
             "ALTER" => Token::Alter,
             "DELETE" => Token::Delete,
             "DROP" => Token::Drop,
             "NOT" => Token::Not,
             "AND" => Token::And,
             "OR" => Token::Or,
+            "IN" => Token::In,
+            "LIKE" => Token::Like,
+            "BETWEEN" => Token::Between,
+            "IS" => Token::Is,
             _ => Token::Ident(out),
         })
     }

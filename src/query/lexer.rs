@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use super::error::{QueryErr, Result};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token {
@@ -93,7 +94,7 @@ impl Lexer {
         }
     }
 
-    pub fn next(&mut self) -> Result<Token, LexErr> {
+    pub fn next(&mut self) -> Result<Token> {
         self.skip_ws();
         // 렉싱이 성공적으로 끝난 경우
         if self.finished() {
@@ -107,7 +108,7 @@ impl Lexer {
                 && ch != '\n'
             {}
         }
-        let ch = self.walk().ok_or(LexErr::UnexpectedEof)?;
+        let ch = self.walk().ok_or(QueryErr::UnexpectedEof)?;
         Ok(match ch {
             '.' => Token::Dot,
             ',' => Token::Comma,
@@ -138,17 +139,17 @@ impl Lexer {
             '\'' | '"' => self.lex_text(ch)?,
             _ if Self::is_digit(ch) => self.lex_num(ch)?,
             _ if Self::is_letter(ch) => self.lex_keyword(ch)?,
-            _ => return Err(LexErr::InvalidToken(ch)),
+            _ => return Err(QueryErr::InvalidToken(ch)),
         })
     }
 
-    fn lex_text(&mut self, quote: char) -> Result<Token, LexErr> {
+    fn lex_text(&mut self, quote: char) -> Result<Token> {
         let mut out = String::new();
         while let Some(ch) = self.walk() {
             if ch == quote {
                 return Ok(Token::Text(out));
             } else if ch == '\\' {
-                let esc = self.walk().ok_or(LexErr::UnterminatedText)?;
+                let esc = self.walk().ok_or(QueryErr::UnterminatedText)?;
                 match esc {
                     '\\' => out.push('\\'),
                     '\'' => out.push('\''),
@@ -165,10 +166,10 @@ impl Lexer {
                 out.push(ch);
             }
         }
-        Err(LexErr::UnterminatedText)
+        Err(QueryErr::UnterminatedText)
     }
 
-    fn lex_num(&mut self, start: char) -> Result<Token, LexErr> {
+    fn lex_num(&mut self, start: char) -> Result<Token> {
         let mut float = false;
         let mut out = String::from(start);
         while let Some(ch) = self.curr() {
@@ -183,7 +184,7 @@ impl Lexer {
             }
         }
         if out.is_empty() {
-            Err(LexErr::InvalidNum(out))
+            Err(QueryErr::InvalidNum(out))
         } else {
             if float && out.ends_with('.') {
                 out.push('0');
@@ -192,7 +193,7 @@ impl Lexer {
         }
     }
 
-    fn lex_keyword(&mut self, start: char) -> Result<Token, LexErr> {
+    fn lex_keyword(&mut self, start: char) -> Result<Token> {
         let mut out = String::from(start);
         while let Some(ch) = self.curr()
             && (Self::is_letter(ch) || Self::is_digit(ch))
@@ -228,16 +229,6 @@ impl Lexer {
             _ => Token::Ident(out),
         })
     }
-}
-
-#[derive(Debug)]
-pub enum LexErr {
-    ReservedKeyword,
-    UnexpectedEof,
-    InvalidNum(String),
-    UnterminatedText,
-    InvalidIdent,
-    InvalidToken(char),
 }
 
 #[cfg(test)]
@@ -329,7 +320,7 @@ mod test {
     fn test_unterminated_string() {
         let mut lexer = Lexer::new("'unfinished");
         match lexer.next() {
-            Err(LexErr::UnterminatedText) => (),
+            Err(QueryErr::UnterminatedText) => (),
             _ => panic!("Expected UnterminatedText error"),
         }
     }
@@ -373,7 +364,7 @@ mod test {
         let mut lexer = Lexer::new("SELECT -- comment");
         assert_eq!(lexer.next().unwrap(), Token::Select);
         match lexer.next() {
-            Err(LexErr::UnexpectedEof) => (),
+            Err(QueryErr::UnexpectedEof) => (),
             _ => panic!("Expected UnexpectedEof after comment at end of string"),
         }
     }

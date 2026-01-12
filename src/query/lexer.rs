@@ -40,6 +40,8 @@ pub enum Token {
     Update,   // UPDATE
     Set,      // SET
     Alter,    // ALTER
+    Add,      // ADD
+    Rename,   // RENAME
     Delete,   // DELETE
     Truncate, // TRUNCATE
     Drop,     // DROP
@@ -59,16 +61,16 @@ pub enum Token {
     In,      // IN
     Like,    // LIKE
     Between, // BETWEEN
-    Is,      // IS
-    Eq,      // =
-    Gt,      // >
-    Lt,      // <
-    Ge,      // >=
-    Le,      // <=
-    Add,     // +
-    Sub,     // -
-    Mul,     // *
-    Div,     // /
+    Is,      // I
+    OpEq,    // =
+    OpGt,    // >
+    OpLt,    // <
+    OpGe,    // >=
+    OpLe,    // <=
+    OpAdd,   // +
+    OpSub,   // -
+    OpMul,   // *
+    OpDiv,   // /
 }
 
 pub struct Lexer {
@@ -137,27 +139,27 @@ impl Lexer {
             ';' => Token::Semicolon,
             '(' => Token::LParen,
             ')' => Token::RParen,
-            '=' => Token::Eq,
+            '=' => Token::OpEq,
             '>' => {
                 if self.curr() == Some('=') {
                     self.walk();
-                    Token::Ge
+                    Token::OpGe
                 } else {
-                    Token::Gt
+                    Token::OpGt
                 }
             }
             '<' => {
                 if self.curr() == Some('=') {
                     self.walk();
-                    Token::Le
+                    Token::OpLe
                 } else {
-                    Token::Lt
+                    Token::OpLt
                 }
             }
-            '+' => Token::Add,
-            '-' => Token::Sub,
-            '*' => Token::Mul,
-            '/' => Token::Div,
+            '+' => Token::OpAdd,
+            '-' => Token::OpSub,
+            '*' => Token::OpMul,
+            '/' => Token::OpDiv,
             '\'' | '"' => self.lex_text(ch)?,
             _ if Self::is_digit(ch) => self.lex_num(ch)?,
             _ if Self::is_letter(ch) => self.lex_keyword(ch)?,
@@ -262,6 +264,8 @@ impl Lexer {
             "UPDATE" => Token::Update,
             "SET" => Token::Set,
             "ALTER" => Token::Alter,
+            "ADD" => Token::Add,
+            "RENAME" => Token::Rename,
             "DELETE" => Token::Delete,
             "TRUNCATE" => Token::Truncate,
             "DROP" => Token::Drop,
@@ -323,15 +327,15 @@ mod test {
     #[test]
     fn test_operators() {
         let mut lexer = Lexer::new("= > < >= <= + - * /");
-        assert_eq!(lexer.next().unwrap(), Token::Eq);
-        assert_eq!(lexer.next().unwrap(), Token::Gt);
-        assert_eq!(lexer.next().unwrap(), Token::Lt);
-        assert_eq!(lexer.next().unwrap(), Token::Ge);
-        assert_eq!(lexer.next().unwrap(), Token::Le);
-        assert_eq!(lexer.next().unwrap(), Token::Add);
-        assert_eq!(lexer.next().unwrap(), Token::Sub);
-        assert_eq!(lexer.next().unwrap(), Token::Mul);
-        assert_eq!(lexer.next().unwrap(), Token::Div);
+        assert_eq!(lexer.next().unwrap(), Token::OpEq);
+        assert_eq!(lexer.next().unwrap(), Token::OpGt);
+        assert_eq!(lexer.next().unwrap(), Token::OpLt);
+        assert_eq!(lexer.next().unwrap(), Token::OpGe);
+        assert_eq!(lexer.next().unwrap(), Token::OpLe);
+        assert_eq!(lexer.next().unwrap(), Token::OpAdd);
+        assert_eq!(lexer.next().unwrap(), Token::OpSub);
+        assert_eq!(lexer.next().unwrap(), Token::OpMul);
+        assert_eq!(lexer.next().unwrap(), Token::OpDiv);
     }
 
     #[test]
@@ -353,7 +357,7 @@ mod test {
         assert_eq!(lexer.next().unwrap(), Token::Ident("users".to_string()));
         assert_eq!(lexer.next().unwrap(), Token::Where);
         assert_eq!(lexer.next().unwrap(), Token::Ident("id".to_string()));
-        assert_eq!(lexer.next().unwrap(), Token::Eq);
+        assert_eq!(lexer.next().unwrap(), Token::OpEq);
         assert_eq!(lexer.next().unwrap(), Token::Int(1i64));
         assert_eq!(lexer.next().unwrap(), Token::Semicolon);
     }

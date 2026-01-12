@@ -3,6 +3,7 @@ use super::lexer::{Lexer, Token};
 use std::mem::{discriminant, replace};
 
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub enum Stmt {
     // CREATE TABLE [IF NOT EXISTS] <table> (<col1> <type>, <col2> <type>, ...)
     Create {

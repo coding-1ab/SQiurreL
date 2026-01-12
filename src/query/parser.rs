@@ -333,7 +333,7 @@ impl Parser {
             self.parse_alter_add(table)
         } else if self.maybe(&[Token::Drop, Token::Column])? {
             self.parse_alter_drop(table)
-        } else if self.maybe(&[Token::Rename])? {
+        } else if self.maybe(&[Token::Rename, Token::To])? {
             self.parse_alter_rename(table)
         } else {
             Err(QueryErr::UnexpectedToken {

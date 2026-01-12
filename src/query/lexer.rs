@@ -21,24 +21,30 @@ pub enum Token {
     // 키워드
     Create,   // CREATE
     Table,    // TABLE
+    If,       // IF
+    Exists,   // EXISTS
     Insert,   // INSERT
     Into,     // INTO
     Values,   // VALUES
     Select,   // SELECT
+    Distinct, // DISTINCT
     From,     // FROM
+    Where,    // WHERE
+    Group,    // GROUP
+    By,       // BY
+    Having,   // HAVING
+    Order,    // ORDER
+    Asc,      // ASC
+    Desc,     // DESC
+    Limit,    // LIMIT
     Update,   // UPDATE
     Set,      // SET
     Alter,    // ALTER
     Delete,   // DELETE
     Drop,     // DROP
+    Restrict, // RESTRICT
+    Cascade,  // CASCADE
     Union,    // UNION
-    Where,    // WHERE
-    Order,    // ORDER
-    By,       // BY
-    Asc,      // ASC
-    Desc,     // DESC
-    Limit,    // LIMIT
-    Distinct, // DISTINCT
     // 구분자
     Dot,       // .
     Comma,     // ,
@@ -236,24 +242,30 @@ impl Lexer {
             // 키워드
             "CREATE" => Token::Create,
             "TABLE" => Token::Table,
+            "IF" => Token::If,
+            "EXISTS" => Token::Exists,
             "INSERT" => Token::Insert,
             "INTO" => Token::Into,
             "VALUES" => Token::Values,
             "SELECT" => Token::Select,
+            "DISTINCT" => Token::Distinct,
             "FROM" => Token::From,
+            "WHERE" => Token::Where,
+            "GROUP" => Token::Group,
+            "BY" => Token::By,
+            "HAVING" => Token::Having,
+            "ORDER" => Token::Order,
+            "ASC" => Token::Asc,
+            "DESC" => Token::Desc,
+            "LIMIT" => Token::Limit,
             "UPDATE" => Token::Update,
             "SET" => Token::Set,
             "ALTER" => Token::Alter,
             "DELETE" => Token::Delete,
             "DROP" => Token::Drop,
+            "RESTRICT" => Token::Restrict,
+            "CASCADE" => Token::Cascade,
             "UNION" => Token::Union,
-            "WHERE" => Token::Where,
-            "ORDER" => Token::Order,
-            "BY" => Token::By,
-            "ASC" => Token::Asc,
-            "DESC" => Token::Desc,
-            "LIMIT" => Token::Limit,
-            "DISTINCT" => Token::Distinct,
             // 연산자
             "NOT" => Token::Not,
             "AND" => Token::And,

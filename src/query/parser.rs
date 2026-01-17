@@ -414,21 +414,6 @@ impl Parser {
         Ok(items)
     }
 
-    fn parse_optional_clauses(&mut self) -> Result<Vec<Clause>> {
-        let mut clauses = Vec::new();
-        loop {
-            match &self.curr {
-                Token::Where => {
-                    self.next()?;
-                    let expr = self.parse_expr(0)?;
-                    clauses.push(Clause::Where(expr.boxed()));
-                }
-                _ => break,
-            }
-        }
-        Ok(clauses)
-    }
-
     fn consume_ident(&mut self) -> Result<Box<str>> {
         match self.next()? {
             Token::Ident(name) => Ok(name.into_boxed_str()),

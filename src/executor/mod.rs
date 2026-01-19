@@ -141,6 +141,10 @@ pub struct Executor {
 }
 
 impl Executor {
+    pub fn new() -> Self {
+        todo!()
+    }
+
     pub fn run(&mut self, src: String) -> QueryResult {
         let lexer = Lexer::new(&src);
         let parser = Parser::new(lexer);

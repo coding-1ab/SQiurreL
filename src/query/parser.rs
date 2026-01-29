@@ -486,3 +486,229 @@ impl Parser {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn parse(input: &str) -> Stmt {
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer).unwrap();
+        let mut stmts = parser.parse().unwrap();
+        assert_eq!(stmts.len(), 1);
+        stmts.pop().unwrap()
+    }
+
+    #[test]
+    fn test_create_table() {
+        let input = "CREATE TABLE users (id INT, name TEXT);";
+        let stmt = parse(input);
+        match stmt {
+            Stmt::Create {
+                table,
+                columns,
+                if_not_exists,
+            } => {
+                assert_eq!(table.as_ref(), "users");
+                assert_eq!(columns.len(), 2);
+                assert_eq!(columns[0], ("id".into(), "INTEGER".into()));
+                assert_eq!(columns[1], ("name".into(), "TEXT".into()));
+                assert!(!if_not_exists);
+            }
+            _ => panic!("Expected Create stmt"),
+        }
+
+        let input_if_not_exists = "CREATE TABLE IF NOT EXISTS items (price FLOAT);";
+        let stmt = parse(input_if_not_exists);
+        match stmt {
+            Stmt::Create {
+                table,
+                columns,
+                if_not_exists,
+            } => {
+                assert_eq!(table.as_ref(), "items");
+                assert_eq!(columns.len(), 1);
+                assert!(if_not_exists);
+            }
+            _ => panic!("Expected Create stmt"),
+        }
+    }
+
+    #[test]
+    fn test_insert() {
+        let input = "INSERT INTO users VALUES (1, 'Alice');";
+        let stmt = parse(input);
+        match stmt {
+            Stmt::InsertValues {
+                table,
+                columns,
+                values,
+            } => {
+                assert_eq!(table.as_ref(), "users");
+                assert!(columns.is_empty()); // 컬럼 명시 안함
+                assert_eq!(values.len(), 1); // 1 row
+                assert_eq!(values[0].len(), 2);
+                assert_eq!(values[0][0], Expr::Int(1));
+                assert_eq!(values[0][1], Expr::Text("Alice".into()));
+            }
+            _ => panic!("Expected InsertValues stmt"),
+        }
+
+        // 컬럼 명시
+        let input_cols = "INSERT INTO users (id, name) VALUES (2, 'Bob');";
+        let stmt = parse(input_cols);
+        match stmt {
+            Stmt::InsertValues {
+                table,
+                columns,
+                values,
+            } => {
+                assert_eq!(table.as_ref(), "users");
+                assert_eq!(columns.len(), 2);
+                assert_eq!(columns[0].as_ref(), "id");
+                assert_eq!(columns[1].as_ref(), "name");
+                assert_eq!(values.len(), 1);
+            }
+            _ => panic!("Expected InsertValues stmt"),
+        }
+    }
+
+    #[test]
+    fn test_select() {
+        let input = "SELECT id, name FROM users;";
+        let stmt = parse(input);
+        match stmt {
+            Stmt::Select {
+                table,
+                columns,
+                distinct,
+                ..
+            } => {
+                assert_eq!(table.as_ref(), "users");
+                assert_eq!(columns.len(), 2);
+                assert!(!distinct);
+            }
+            _ => panic!("Expected Select stmt"),
+        }
+
+        let input_all = "SELECT * FROM users;";
+        let stmt = parse(input_all);
+        match stmt {
+            Stmt::Select { columns, .. } => {
+                assert!(columns.is_empty()); // * is parsed as empty columns list
+            }
+            _ => panic!("Expected Select stmt"),
+        }
+
+        let input_distinct = "SELECT DISTINCT id FROM users;";
+        let stmt = parse(input_distinct);
+        match stmt {
+            Stmt::Select { distinct, .. } => {
+                assert!(distinct);
+            }
+            _ => panic!("Expected Select stmt"),
+        }
+    }
+
+    #[test]
+    fn test_update() {
+        let input = "UPDATE users SET name = 'Charlie', score = score + 1;";
+        let stmt = parse(input);
+        match stmt {
+            Stmt::Update { table, assigns, .. } => {
+                assert_eq!(table.as_ref(), "users");
+                assert_eq!(assigns.len(), 2);
+                assert_eq!(assigns[0].0.as_ref(), "name");
+                assert_eq!(assigns[1].0.as_ref(), "score");
+            }
+            _ => panic!("Expected Update stmt"),
+        }
+    }
+
+    #[test]
+    fn test_alter() {
+        let input_add = "ALTER TABLE users ADD COLUMN age INT;";
+        let stmt = parse(input_add);
+        match stmt {
+            Stmt::AlterAdd { table, column } => {
+                assert_eq!(table.as_ref(), "users");
+                assert_eq!(column, ("age".into(), "INTEGER".into()));
+            }
+            _ => panic!("Expected AlterAdd stmt"),
+        }
+
+        let input_drop = "ALTER TABLE users DROP COLUMN age;";
+        let stmt = parse(input_drop);
+        match stmt {
+            Stmt::AlterDrop { table, column } => {
+                assert_eq!(table.as_ref(), "users");
+                assert_eq!(column.as_ref(), "age");
+            }
+            _ => panic!("Expected AlterDrop stmt"),
+        }
+
+        let input_rename = "ALTER TABLE users RENAME TO super_users;";
+        let stmt = parse(input_rename);
+        match stmt {
+            Stmt::AlterRename { table, new_name } => {
+                assert_eq!(table.as_ref(), "users");
+                assert_eq!(new_name.as_ref(), "super_users");
+            }
+            _ => panic!("Expected AlterRename stmt"),
+        }
+    }
+
+    #[test]
+    fn test_delete() {
+        let input = "DELETE FROM users;";
+        let stmt = parse(input);
+        match stmt {
+            Stmt::Delete { table, .. } => {
+                assert_eq!(table.as_ref(), "users");
+            }
+            _ => panic!("Expected Delete stmt"),
+        }
+    }
+
+    #[test]
+    fn test_truncate() {
+        let input = "TRUNCATE TABLE users;";
+        let stmt = parse(input);
+        match stmt {
+            Stmt::Truncate { table } => {
+                assert_eq!(table.as_ref(), "users");
+            }
+            _ => panic!("Expected Truncate stmt"),
+        }
+    }
+
+    #[test]
+    fn test_drop() {
+        let input = "DROP TABLE items;";
+        let stmt = parse(input);
+        match stmt {
+            Stmt::Drop {
+                table,
+                if_exists,
+                cascade,
+            } => {
+                assert_eq!(table.as_ref(), "items");
+                assert!(!if_exists);
+                assert!(!cascade);
+            }
+            _ => panic!("Expected Drop stmt"),
+        }
+
+        let input_opts = "DROP TABLE IF EXISTS items CASCADE;";
+        let stmt = parse(input_opts);
+        match stmt {
+            Stmt::Drop {
+                if_exists, cascade, ..
+            } => {
+                assert!(if_exists);
+                assert!(cascade);
+            }
+            _ => panic!("Expected Drop stmt"),
+        }
+    }
+}
